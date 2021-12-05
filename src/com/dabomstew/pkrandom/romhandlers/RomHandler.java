@@ -571,6 +571,8 @@ public interface RomHandler {
 
     void randomizeEvolutions(Settings settings);
 
+    void randomizeEvolutionsEveryLevel(Settings settings);
+
     // ==================================
     // (Mostly) unchanging lists of moves
     // ==================================
