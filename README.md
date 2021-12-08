@@ -1,4 +1,4 @@
-Universal Pokemon Randomizer ZX by Ajarmar
+Universal Pokemon Randomizer ZX by Ajarmar forked for better CLI support, and for use on pokerandom.com
 
 With significant contributions from darkeye, cleartonic
 
