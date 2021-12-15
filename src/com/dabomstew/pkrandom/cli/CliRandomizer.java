@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
+import static spark.Spark.*;
 
 public class CliRandomizer {
 
@@ -30,6 +31,7 @@ public class CliRandomizer {
                 new Gen6RomHandler.Factory(),
                 new Gen7RomHandler.Factory()
         };
+
 
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintStream log;
@@ -81,6 +83,7 @@ public class CliRandomizer {
                     String filename = fh.getAbsolutePath();
 
                     Randomizer randomizer = new Randomizer(settings, romHandler, saveAsDirectory);
+                    //TODO: Receive seed from parameter and go from there, pass to function
                     randomizer.randomize(filename, verboseLog);
                     verboseLog.close();
                     byte[] out = baos.toByteArray();
@@ -120,6 +123,11 @@ public class CliRandomizer {
     }
 
     public static int invoke(String[] args) {
+        get("/", (request, response) -> {
+            // Show something
+
+            return 1;
+        });
         String settingsFilePath = null;
         String sourceRomFilePath = null;
         String outputRomFilePath = null;
