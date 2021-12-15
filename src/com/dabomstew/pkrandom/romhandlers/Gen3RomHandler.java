@@ -1498,11 +1498,6 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
     }
 
     @Override
-    public String[] getShopNames() {
-        return Gen3Constants.getShopNames(romEntry.romType).toArray(new String[0]);
-    }
-
-    @Override
     public List<Integer> getEvolutionItems() {
         return Gen3Constants.evolutionItems;
     }
@@ -1646,6 +1641,11 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
     @Override
     public Pokemon getAltFormeOfPokemon(Pokemon pk, int forme) {
         return pk;
+    }
+
+    @Override
+    public List<Pokemon> getIrregularFormes() {
+        return new ArrayList<>();
     }
 
     @Override
@@ -2770,12 +2770,11 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
     }
 
     @Override
-    public Map<Integer, List<Integer>> getShopItems() {
-        List<Integer> skipShops =
-                Arrays.stream(romEntry.arrayEntries.get("SkipShops"))
-                .boxed()
-                .collect(Collectors.toList());
-        Map<Integer, List<Integer>> shopItemsMap = new TreeMap<>();
+    public Map<Integer, Shop> getShopItems() {
+        List<String> shopNames = Gen3Constants.getShopNames(romEntry.romType);
+        List<Integer> mainGameShops = Arrays.stream(romEntry.arrayEntries.get("MainGameShops")).boxed().collect(Collectors.toList());
+        List<Integer> skipShops = Arrays.stream(romEntry.arrayEntries.get("SkipShops")).boxed().collect(Collectors.toList());
+        Map<Integer, Shop> shopItemsMap = new TreeMap<>();
         int[] shopItemOffsets = romEntry.arrayEntries.get("ShopItemOffsets");
         for (int i = 0; i < shopItemOffsets.length; i++) {
             if (!skipShops.contains(i)) {
@@ -2787,20 +2786,24 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
                     offset += 2;
                     val = FileFunctions.read2ByteInt(rom, offset);
                 }
-                shopItemsMap.put(i, items);
+                Shop shop = new Shop();
+                shop.items = items;
+                shop.name = shopNames.get(i);
+                shop.isMainGame = mainGameShops.contains(i);
+                shopItemsMap.put(i, shop);
             }
         }
         return shopItemsMap;
     }
 
     @Override
-    public void setShopItems(Map<Integer, List<Integer>> shopItems) {
+    public void setShopItems(Map<Integer, Shop> shopItems) {
         int[] shopItemOffsets = romEntry.arrayEntries.get("ShopItemOffsets");
         for (int i = 0; i < shopItemOffsets.length; i++) {
-            List<Integer> thisShopItems = shopItems.get(i);
-            if (thisShopItems != null) {
+            Shop thisShop = shopItems.get(i);
+            if (thisShop != null && thisShop.items != null) {
                 int offset = shopItemOffsets[i];
-                Iterator<Integer> iterItems = thisShopItems.iterator();
+                Iterator<Integer> iterItems = thisShop.items.iterator();
                 while (iterItems.hasNext()) {
                     FileFunctions.write2ByteInt(rom, offset, iterItems.next());
                     offset += 2;
@@ -2819,13 +2822,6 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
             int offset = itemDataOffset + (i * entrySize) + 16;
             FileFunctions.write2ByteInt(rom, offset, balancedPrice);
         }
-    }
-
-    @Override
-    public List<Integer> getMainGameShops() {
-        return Arrays.stream(romEntry.arrayEntries.get("MainGameShops"))
-                .boxed()
-                .collect(Collectors.toList());
     }
 
     @Override

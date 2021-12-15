@@ -379,7 +379,7 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
     private NARCArchive pokeNarc, moveNarc, stringsNarc, storyTextNarc, scriptNarc, shopNarc;
 
     @Override
-    protected boolean detectNDSRom(String ndsCode) {
+    protected boolean detectNDSRom(String ndsCode, byte version) {
         return detectNDSRomInner(ndsCode);
     }
 
@@ -401,7 +401,7 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
     }
 
     @Override
-    protected void loadedROM(String romCode) {
+    protected void loadedROM(String romCode, byte version) {
         this.romEntry = entryFor(romCode);
         try {
             arm9 = readARM9();
@@ -720,6 +720,11 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
     public Pokemon getAltFormeOfPokemon(Pokemon pk, int forme) {
         int pokeNum = Gen5Constants.getAbsolutePokeNumByBaseForme(pk.number,forme);
         return pokeNum != 0 ? pokes[pokeNum] : pk;
+    }
+
+    @Override
+    public List<Pokemon> getIrregularFormes() {
+        return Gen5Constants.irregularFormes.stream().map(i -> pokes[i]).collect(Collectors.toList());
     }
 
     @Override
@@ -2870,10 +2875,11 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
     private void writeShedinjaEvolution() throws IOException {
         Pokemon nincada = pokes[Species.nincada];
 
-        // When the "Limit Pokemon" setting is enabled, we clear out the evolutions of
-        // everything *not* in the pool, which could include Nincada. In that case,
-        // there's no point in even worrying about Shedinja, so just return.
-        if (nincada.evolutionsFrom.size() == 0) {
+        // When the "Limit Pokemon" setting is enabled and Gen 3 is disabled, or when
+        // "Random Every Level" evolutions are selected, we end up clearing out Nincada's
+        // vanilla evolutions. In that case, there's no point in even worrying about
+        // Shedinja, so just return.
+        if (nincada.evolutionsFrom.size() < 2) {
             return;
         }
         Pokemon extraEvolution = nincada.evolutionsFrom.get(1).to;
@@ -3291,11 +3297,6 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
     @Override
     public String[] getItemNames() {
         return itemNames.toArray(new String[0]);
-    }
-
-    @Override
-    public String[] getShopNames() {
-        return shopNames.toArray(new String[0]);
     }
     
     @Override
@@ -3747,14 +3748,14 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
     }
 
     @Override
-    public Map<Integer, List<Integer>> getShopItems() {
+    public Map<Integer, Shop> getShopItems() {
         int[] tmShops = romEntry.arrayEntries.get("TMShops");
         int[] regularShops = romEntry.arrayEntries.get("RegularShops");
         int[] shopItemOffsets = romEntry.arrayEntries.get("ShopItemOffsets");
         int[] shopItemSizes = romEntry.arrayEntries.get("ShopItemSizes");
         int shopCount = romEntry.getInt("ShopCount");
-        List<Integer> shopItems = new ArrayList<>();    
-        Map<Integer,List<Integer>> shopItemsMap = new TreeMap<>();
+        List<Integer> shopItems = new ArrayList<>();
+        Map<Integer, Shop> shopItemsMap = new TreeMap<>();
 
         try {
             byte[] shopItemOverlay = readOverlay(romEntry.getInt("ShopItemOvlNumber"));
@@ -3785,7 +3786,11 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
                             items.add(readWord(shop, j));
                         }
                     }
-                    shopItemsMap.put(i, items);
+                    Shop shop = new Shop();
+                    shop.items = items;
+                    shop.name = shopNames.get(i);
+                    shop.isMainGame = Gen5Constants.getMainGameShops(romEntry.romType).contains(i);
+                    shopItemsMap.put(i, shop);
                 }
             });
             return shopItemsMap;
@@ -3795,7 +3800,7 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
     }
 
     @Override
-    public void setShopItems(Map<Integer, List<Integer>> shopItems) {
+    public void setShopItems(Map<Integer, Shop> shopItems) {
         int[] shopItemOffsets = romEntry.arrayEntries.get("ShopItemOffsets");
         int[] shopItemSizes = romEntry.arrayEntries.get("ShopItemSizes");
         int[] tmShops = romEntry.arrayEntries.get("TMShops");
@@ -3815,7 +3820,7 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
                     if (i == regularShop) badShop = true;
                 }
                 if (!badShop) {
-                    List<Integer> shopContents = shopItems.get(i);
+                    List<Integer> shopContents = shopItems.get(i).items;
                     Iterator<Integer> iterItems = shopContents.iterator();
                     if (romEntry.romType == Gen5Constants.Type_BW) {
                         for (int j = 0; j < shopItemSizes[i]; j++) {
@@ -3852,11 +3857,6 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
-    }
-
-    @Override
-    public List<Integer> getMainGameShops() {
-        return Gen5Constants.getMainGameShops(romEntry.romType);
     }
 
     @Override

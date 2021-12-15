@@ -1010,6 +1010,11 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
     }
 
     @Override
+    public List<Pokemon> getIrregularFormes() {
+        return new ArrayList<>();
+    }
+
+    @Override
     public boolean hasFunctionalFormes() {
         return false;
     }
@@ -1590,23 +1595,18 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
     }
 
     @Override
-    public Map<Integer, List<Integer>> getShopItems() {
+    public Map<Integer, Shop> getShopItems() {
         return null; // Not implemented
     }
 
     @Override
-    public void setShopItems(Map<Integer, List<Integer>> shopItems) {
+    public void setShopItems(Map<Integer, Shop> shopItems) {
         // Not implemented
     }
 
     @Override
     public void setShopPrices() {
         // Not implemented
-    }
-
-    @Override
-    public List<Integer> getMainGameShops() {
-        return new ArrayList<>();
     }
 
     @Override
@@ -1769,10 +1769,6 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
         return trainerClassNames;
     }
 
-    @Override
-    public String[] getShopNames() {
-        return null;
-    }
     @Override
     public List<Integer> getEvolutionItems() {
         return null;

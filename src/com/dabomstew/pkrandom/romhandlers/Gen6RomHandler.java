@@ -695,10 +695,11 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
     private void writeShedinjaEvolution() throws IOException {
         Pokemon nincada = pokes[Species.nincada];
 
-        // When the "Limit Pokemon" setting is enabled, we clear out the evolutions of
-        // everything *not* in the pool, which could include Nincada. In that case,
-        // there's no point in even worrying about Shedinja, so just return.
-        if (nincada.evolutionsFrom.size() == 0) {
+        // When the "Limit Pokemon" setting is enabled and Gen 3 is disabled, or when
+        // "Random Every Level" evolutions are selected, we end up clearing out Nincada's
+        // vanilla evolutions. In that case, there's no point in even worrying about
+        // Shedinja, so just return.
+        if (nincada.evolutionsFrom.size() < 2) {
             return;
         }
         Pokemon primaryEvolution = nincada.evolutionsFrom.get(0).to;
@@ -887,6 +888,11 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
     public Pokemon getAltFormeOfPokemon(Pokemon pk, int forme) {
         int pokeNum = absolutePokeNumByBaseForme.getOrDefault(pk.number,dummyAbsolutePokeNums).getOrDefault(forme,0);
         return pokeNum != 0 ? pokes[pokeNum] : pk;
+    }
+
+    @Override
+    public List<Pokemon> getIrregularFormes() {
+        return Gen6Constants.irregularFormes.stream().map(i -> pokes[i]).collect(Collectors.toList());
     }
 
     @Override
@@ -3148,11 +3154,6 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
     }
 
     @Override
-    public String[] getShopNames() {
-        return shopNames.toArray(new String[0]);
-    }
-
-    @Override
     public String abilityName(int number) {
         return abilityNames.get(number);
     }
@@ -3572,12 +3573,12 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
     }
 
     @Override
-    public Map<Integer, List<Integer>> getShopItems() {
+    public Map<Integer, Shop> getShopItems() {
         int[] tmShops = romEntry.arrayEntries.get("TMShops");
         int[] regularShops = romEntry.arrayEntries.get("RegularShops");
         int[] shopItemSizes = romEntry.arrayEntries.get("ShopItemSizes");
         int shopCount = romEntry.getInt("ShopCount");
-        Map<Integer,List<Integer>> shopItemsMap = new TreeMap<>();
+        Map<Integer, Shop> shopItemsMap = new TreeMap<>();
 
         int offset = getShopItemsOffset();
         if (offset <= 0) {
@@ -3606,14 +3607,18 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                     items.add(FileFunctions.read2ByteInt(code,offset));
                     offset += 2;
                 }
-                shopItemsMap.put(i,items);
+                Shop shop = new Shop();
+                shop.items = items;
+                shop.name = shopNames.get(i);
+                shop.isMainGame = Gen6Constants.getMainGameShops(romEntry.romType).contains(i);
+                shopItemsMap.put(i, shop);
             }
         }
         return shopItemsMap;
     }
 
     @Override
-    public void setShopItems(Map<Integer, List<Integer>> shopItems) {
+    public void setShopItems(Map<Integer, Shop> shopItems) {
         int[] shopItemSizes = romEntry.arrayEntries.get("ShopItemSizes");
         int[] tmShops = romEntry.arrayEntries.get("TMShops");
         int[] regularShops = romEntry.arrayEntries.get("RegularShops");
@@ -3642,7 +3647,7 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                 }
             }
             if (!badShop) {
-                List<Integer> shopContents = shopItems.get(i);
+                List<Integer> shopContents = shopItems.get(i).items;
                 Iterator<Integer> iterItems = shopContents.iterator();
                 for (int j = 0; j < shopItemSizes[i]; j++) {
                     Integer item = iterItems.next();
@@ -3674,11 +3679,6 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
-    }
-
-    @Override
-    public List<Integer> getMainGameShops() {
-        return Gen6Constants.getMainGameShops(romEntry.romType);
     }
 
     @Override
