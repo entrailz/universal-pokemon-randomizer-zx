@@ -3,14 +3,13 @@ package com.dabomstew.pkrandom.cli;
 import com.dabomstew.pkrandom.*;
 import com.dabomstew.pkrandom.pokemon.ExpCurve;
 import com.dabomstew.pkrandom.romhandlers.*;
+import netscape.javascript.JSObject;
 
 import javax.swing.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.json.*;
 import static spark.Spark.*;
 
 public class CliRandomizer {
@@ -18,7 +17,14 @@ public class CliRandomizer {
     private final static ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/dabomstew/pkrandom/newgui/Bundle");
     public static RomHandler romHandler;
 
-    private static boolean performDirectRandomization(Settings settings, String sourceRomFilePath,
+    private static String performDirectRandomization(Settings settings, String sourceRomFilePath,
+                                                      String destinationRomFilePath, boolean saveAsDirectory,
+                                                      String updateFilePath, boolean saveLog)
+    {
+        return performDirectRandomization(settings, 0, sourceRomFilePath, destinationRomFilePath, saveAsDirectory, updateFilePath, saveLog);
+    }
+
+    private static String performDirectRandomization(Settings settings, long seed, String sourceRomFilePath,
                                                       String destinationRomFilePath, boolean saveAsDirectory,
                                                       String updateFilePath, boolean saveLog) {
         // borrowed directly from NewRandomizerGUI()
@@ -75,7 +81,7 @@ public class CliRandomizer {
                             String currentFN = romHandler.loadedFilename();
                             if (currentFN.equals(fh.getAbsolutePath())) {
                                 printError(bundle.getString("GUI.cantOverwriteDS"));
-                                return false;
+                                return "error";
                             }
                         }
                     }
@@ -83,8 +89,16 @@ public class CliRandomizer {
                     String filename = fh.getAbsolutePath();
 
                     Randomizer randomizer = new Randomizer(settings, romHandler, saveAsDirectory);
-                    //TODO: Receive seed from parameter and go from there, pass to function
-                    randomizer.randomize(filename, verboseLog);
+                    if (seed == 0)
+                    {
+                        seed = RandomSource.pickSeed();
+                        randomizer.randomize(filename, verboseLog, seed);
+                    }
+                    else
+                    {
+                        randomizer.randomize(filename, verboseLog, seed);
+                    }
+
                     verboseLog.close();
                     byte[] out = baos.toByteArray();
                     if (saveLog) {
@@ -99,9 +113,15 @@ public class CliRandomizer {
                             printWarning("Could not write log.");
                         }
                     }
-                    System.out.println("https://pokerandom.com/tmp/output/" + fh.getName());
+                    String jsonString = new JSONObject()
+                            .put("status", 200)
+                            .put("data", new JSONObject().put("fileName", fh.getName())
+                                    .put("seed", seed)
+                                    .put("settingsString", settings.toString()))
+                            .toString();
+                    return jsonString;
                     // this is the only successful exit, everything else will return false at the end of the function
-                    return true;
+                    //return true;
                 }
             }
             // if we get here it means no rom handlers matched the ROM file
@@ -109,7 +129,7 @@ public class CliRandomizer {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return false;
+        return "";
     }
 
     private static void displaySettingsWarnings(Settings settings, RomHandler romHandler) {
@@ -123,10 +143,29 @@ public class CliRandomizer {
     }
 
     public static int invoke(String[] args) {
-        get("/", (request, response) -> {
+        post("/generate", (request, response) -> {
             // Show something
+            String filePath = request.queryParams("file");
+            Settings settings = createSettingsFromString(request.queryParams("code"), filePath);
+            long providedSeed = 0;
+            if (request.queryParams("seed") != null && !request.queryParams("seed").isEmpty())
+            {
+                try
+                {
+                    providedSeed = Long.parseLong(request.queryParams("seed"));
+                }
+                catch (Exception ex)
+                {
+                    String jsonObject = new JSONObject()
+                            .put("status", "500")
+                            .put("data", "Invalid seed.").toString();
+                    return jsonObject;
+                }
 
-            return 1;
+            }
+            String outFileName = randomStringGenerator.generateString();
+            String result = performDirectRandomization(settings, providedSeed, filePath, outFileName, false, null, false);
+            return result;
         });
         String settingsFilePath = null;
         String sourceRomFilePath = null;
@@ -175,9 +214,9 @@ public class CliRandomizer {
         if (generateSettings)
         {
             //TAKE INPUT FROM generateSettingsInputString, and generate the settings file.
-            Settings settings = createSettingsFromString(generateSettingsInputString);
-            String settingsString = settings.toString();
-            printSuccess(settingsString);
+            //Settings settings = createSettingsFromString(generateSettingsInputString);
+            //String settingsString = settings.toString();
+            //printSuccess(settingsString);
             return 1;
         }
 
@@ -201,7 +240,7 @@ public class CliRandomizer {
                 return 1;
             }
 
-            boolean processResult = CliRandomizer.performDirectRandomization(
+            String processResult = CliRandomizer.performDirectRandomization(
                     settings,
                     sourceRomFilePath,
                     outputRomFilePath,
@@ -209,7 +248,7 @@ public class CliRandomizer {
                     updateFilePath,
                     saveLog
             );
-            if (!processResult) {
+            if (processResult == "error") {
                 printError("Randomization failed");
                 CliRandomizer.printUsage();
                 return 1;
@@ -271,7 +310,7 @@ public class CliRandomizer {
         return true;
     }
 
-    private static Settings createSettingsFromString(String settingsString) {
+    private static Settings createSettingsFromString(String settingsString, String filePath) {
         String[] splitSettings = settingsString.split("#");
         RomHandler.Factory[] checkHandlers = new RomHandler.Factory[] {
                 new Gen1RomHandler.Factory(),
@@ -283,13 +322,11 @@ public class CliRandomizer {
                 new Gen7RomHandler.Factory()
         };
         for (RomHandler.Factory rhf : checkHandlers) {
-            String filePath = splitSettings[0] + "/" +  splitSettings[1];
             File chosenFile = new File(filePath);
             if (rhf.isLoadable(chosenFile.getAbsolutePath()))
             {
                 romHandler = rhf.create(RandomSource.instance());
                 romHandler.loadRom(filePath);
-                printSuccess(romHandler.getROMName());
             }
         }
         //romHandler.loadRom(splitSettings[0] + "/" +  splitSettings[1]);
@@ -663,6 +700,8 @@ public class CliRandomizer {
         AtomicInteger currentMiscTweaks = new AtomicInteger();
         int mtCount = MiscTweak.allTweaks.size();
         MiscTweak.allTweaks.forEach(tweak -> {
+            //TODO: This is how I will find out each tweaks...
+            //printSuccess(tweak.getTweakName());
             if (tweakList.contains(tweak.getTweakName()))
             {
                 currentMiscTweaks.updateAndGet(v -> v | tweak.getValue());
@@ -711,3 +750,4 @@ public class CliRandomizer {
         System.err.println("-d: Save 3DS game as directory (LayeredFS)");
     }
 }
+

@@ -3741,7 +3741,7 @@ public class NewRandomizerGUI {
             // snip the "cli" flag arg off the args array and invoke command
             String[] commandArgs = Arrays.copyOfRange(args, 1, args.length);
             int exitCode = CliRandomizer.invoke(commandArgs);
-            System.exit(exitCode);
+            //System.exit(exitCode);
         } else {
             launcherInput = firstCliArg;
             if (launcherInput.equals("please-use-the-launcher")) usedLauncher = true;
