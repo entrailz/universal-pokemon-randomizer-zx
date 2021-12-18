@@ -65,7 +65,7 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
         super(random, logStream);
     }
 
-    private static class FileEntry {
+    private static class RomFileEntry {
         public String path;
         public long expectedCRC32;
     }
@@ -82,7 +82,7 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
         private Map<String, String> tweakFiles = new HashMap<>();
         private Map<String, Integer> numbers = new HashMap<>();
         private Map<String, int[]> arrayEntries = new HashMap<>();
-        private Map<String, FileEntry> files = new HashMap<>();
+        private Map<String, RomFileEntry> files = new HashMap<>();
         private Map<Integer, Long> overlayExpectedCRC32s = new HashMap<>();
         private List<StaticPokemon> staticPokemon = new ArrayList<>();
         private List<RoamingPokemon> roamingPokemon = new ArrayList<>();
@@ -108,7 +108,7 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
 
         private String getFile(String key) {
             if (!files.containsKey(key)) {
-                files.put(key, new FileEntry());
+                files.put(key, new RomFileEntry());
             }
             return files.get(key).path;
         }
@@ -193,16 +193,16 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
                         } else if (r[0].startsWith("File<")) {
                             String key = r[0].split("<")[1].split(">")[0];
                             String[] values = r[1].substring(1, r[1].length() - 1).split(",");
-                            FileEntry entry = new FileEntry();
+                            RomFileEntry entry = new RomFileEntry();
                             entry.path = values[0].trim();
-                            entry.expectedCRC32 = parseRIILong("0x" + values[1].trim());
+                            entry.expectedCRC32 = parseRILong("0x" + values[1].trim());
                             current.files.put(key, entry);
                         } else if (r[0].equals("Arm9CRC32")) {
-                            current.arm9ExpectedCRC32 = parseRIILong("0x" + r[1]);
+                            current.arm9ExpectedCRC32 = parseRILong("0x" + r[1]);
                         } else if (r[0].startsWith("OverlayCRC32<")) {
                             String keyString = r[0].split("<")[1].split(">")[0];
                             int key = parseRIInt(keyString);
-                            long value = parseRIILong("0x" + r[1]);
+                            long value = parseRILong("0x" + r[1]);
                             current.overlayExpectedCRC32s.put(key, value);
                         } else if (r[0].equals("StaticPokemon{}")) {
                             current.staticPokemon.add(parseStaticPokemon(r[1]));
@@ -303,7 +303,7 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
         }
     }
 
-    private static long parseRIILong(String off) {
+    private static long parseRILong(String off) {
         int radix = 10;
         off = off.trim().toLowerCase();
         if (off.startsWith("0x") || off.startsWith("&h")) {
@@ -1815,7 +1815,7 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
                 // constant that has the same effect.
                 int newRange = maxLevel - level;
                 int divisor = (0xFFFF / (newRange + 1)) + 1;
-                FileFunctions.writeFullIntLittleEndian(encounterOverlay, offset + 148, divisor);
+                FileFunctions.writeFullInt(encounterOverlay, offset + 148, divisor);
             }
             writeExtraEncountersDPPt(honeyTreeData, 0, honeyTreeEncounters.encounters);
         }
@@ -3163,7 +3163,7 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
         // The original code had an entry for Darkrai; its species ID is pc-relative loaded. Since this
         // entry is clearly unused, just replace Darkrai's species ID constant with Cresselia's, since
         // in the original code, her ID is computed as 0x7A << 0x2
-        FileFunctions.writeFullIntLittleEndian(arm9, offset + 244, Species.cresselia);
+        FileFunctions.writeFullInt(arm9, offset + 244, Species.cresselia);
 
         // Now write a pc-relative load to our new constant over where Cresselia's ID is normally mov'd
         // into r7 and shifted.

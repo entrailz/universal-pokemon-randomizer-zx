@@ -213,7 +213,7 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
                             int csp = parseRIInt(r[1]);
                             current.copyStaticPokemon = (csp > 0);
                         } else if (r[0].equals("CRC32")) {
-                            current.expectedCRC32 = parseRIILong("0x" + r[1]);
+                            current.expectedCRC32 = parseRILong("0x" + r[1]);
                         } else if (r[0].endsWith("Tweak")) {
                             current.codeTweaks.put(r[0], r[1]);
                         } else if (r[0].equals("CopyFrom")) {
@@ -282,7 +282,7 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
         }
     }
 
-    private static long parseRIILong(String off) {
+    private static long parseRILong(String off) {
         int radix = 10;
         off = off.trim().toLowerCase();
         if (off.startsWith("0x") || off.startsWith("&h")) {
@@ -2028,7 +2028,7 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
         rom[offset + 22] = 0x57;
 
         // In the space formerly occupied by the first 0x2000000, write Latios's ID
-        FileFunctions.writeFullIntLittleEndian(rom, offset + 128, pokedexToInternal[Species.latios]);
+        FileFunctions.writeFullInt(rom, offset + 128, pokedexToInternal[Species.latios]);
 
         // Where the original function computes Latios's ID by setting r0 to 0xCC << 1, just pc-relative
         // load our constant. We have four bytes of space to play with, and we need to make sure the offset
@@ -2047,7 +2047,7 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
         // Latios's species ID.
         rom[offset + 182] = 0x00;
         rom[offset + 183] = (byte) 0xBD;
-        FileFunctions.writeFullIntLittleEndian(rom, offset + 184, pokedexToInternal[Species.latios]);
+        FileFunctions.writeFullInt(rom, offset + 184, pokedexToInternal[Species.latios]);
 
         // Now write a pc-relative load to this new species ID constant over the original move and lsl. Similar
         // to before, we need to write a nop first for alignment, then pc-relative load into r6.
@@ -2067,7 +2067,7 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
         rom[offset + 14] = 0x41;
 
         // In the space formerly occupied by the first 0x03005D8C, write Latios's ID
-        FileFunctions.writeFullIntLittleEndian(rom, offset + 28, pokedexToInternal[Species.latios]);
+        FileFunctions.writeFullInt(rom, offset + 28, pokedexToInternal[Species.latios]);
 
         // In the original function, we "lsl r0, r0, #0x10" then compare r0 to 0. The thing is, this left
         // shift doesn't actually matter, because 0 << 0x10 = 0, and [non-zero] << 0x10 = [non-zero].

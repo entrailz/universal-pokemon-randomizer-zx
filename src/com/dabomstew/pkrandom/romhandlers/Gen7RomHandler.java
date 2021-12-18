@@ -778,7 +778,7 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
         int offset = find(code, Gen7Constants.ninjaskSpeciesPrefix);
         if (offset > 0) {
             offset += Gen7Constants.ninjaskSpeciesPrefix.length() / 2; // because it was a prefix
-            FileFunctions.writeFullIntLittleEndian(code, offset, primaryEvolution.number);
+            FileFunctions.writeFullInt(code, offset, primaryEvolution.number);
         }
 
         // In the game's executable, there's a hardcoded value to indicate what "extra"
@@ -926,6 +926,11 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
     @Override
     protected String getGameAcronym() {
         return romEntry.acronym;
+    }
+
+    @Override
+    protected boolean isGameUpdateSupported(int version) {
+        return version == romEntry.numbers.get("FullyUpdatedVersionNumber");
     }
 
     @Override
@@ -1387,7 +1392,7 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
             zoneData[i].locationName = locationList.get(zoneData[i].parentMap);
 
             byte[] world = worlds.get(zoneData[i].worldIndex);
-            int mappingOffset = FileFunctions.readFullIntLittleEndian(world, 0x8);
+            int mappingOffset = FileFunctions.readFullInt(world, 0x8);
             for (int offset = mappingOffset; offset < world.length; offset += 4) {
                 int potentialZoneIndex = FileFunctions.read2ByteInt(world, offset);
                 if (potentialZoneIndex == i) {
@@ -1481,7 +1486,7 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
                     tpk.spatkEVs = trpoke[pokeOffs + 5];
                     tpk.spdefEVs = trpoke[pokeOffs + 6];
                     tpk.speedEVs = trpoke[pokeOffs + 7];
-                    tpk.IVs = FileFunctions.readFullIntLittleEndian(trpoke, pokeOffs + 8);
+                    tpk.IVs = FileFunctions.readFullInt(trpoke, pokeOffs + 8);
                     tpk.level = level;
                     if (romEntry.romType == Gen7Constants.Type_USUM) {
                         if (i == 78) {
@@ -1575,7 +1580,7 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
                     trpoke[pokeOffs + 5] = tp.spatkEVs;
                     trpoke[pokeOffs + 6] = tp.spdefEVs;
                     trpoke[pokeOffs + 7] = tp.speedEVs;
-                    FileFunctions.writeFullIntLittleEndian(trpoke, pokeOffs + 8, tp.IVs);
+                    FileFunctions.writeFullInt(trpoke, pokeOffs + 8, tp.IVs);
                     writeWord(trpoke, pokeOffs + 14, tp.level);
                     writeWord(trpoke, pokeOffs + 16, tp.pokemon.number);
                     writeWord(trpoke, pokeOffs + 18, tp.forme);
@@ -1983,7 +1988,7 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
             // don't care about all of this; we just wrote a "mov r0, #forme" over the ldr instead.
             // Thus, if the original ldr instruction is still there, assume we haven't touched it.
             int forme = 0;
-            if (FileFunctions.readFullIntLittleEndian(code, formeOffset) == 0xE59D0040) {
+            if (FileFunctions.readFullInt(code, formeOffset) == 0xE59D0040) {
                 // Since we haven't modified the code yet, this is Zygarde. For SM, use 10%,
                 // since you can get it fairly early. For USUM, use 50%, since it's only
                 // obtainable in the postgame.
@@ -3041,7 +3046,7 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
                 trade.requestedPokemon = requestedPokemon;
                 trade.nickname = tradeStrings.get(FileFunctions.read2ByteInt(tradesFile, offset + 2));
                 trade.otName = tradeStrings.get(FileFunctions.read2ByteInt(tradesFile, offset + 0x18));
-                trade.otId = FileFunctions.readFullIntLittleEndian(tradesFile, offset + 0x10);
+                trade.otId = FileFunctions.readFullInt(tradesFile, offset + 0x10);
                 trade.ivs = new int[6];
                 for (int iv = 0; iv < 6; iv++) {
                     trade.ivs[iv] = tradesFile[offset + 6 + iv];
@@ -3081,7 +3086,7 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
                 FileFunctions.write2ByteInt(tradesFile, offset + 0x2C, trade.requestedPokemon.number);
                 tradeStrings.set(FileFunctions.read2ByteInt(tradesFile, offset + 2), trade.nickname);
                 tradeStrings.set(FileFunctions.read2ByteInt(tradesFile, offset + 0x18), trade.otName);
-                FileFunctions.writeFullIntLittleEndian(tradesFile, offset + 0x10, trade.otId);
+                FileFunctions.writeFullInt(tradesFile, offset + 0x10, trade.otId);
                 for (int iv = 0; iv < 6; iv++) {
                     tradesFile[offset + 6 + iv] = (byte) trade.ivs[iv];
                 }
@@ -3291,7 +3296,7 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
         try {
             GARCArchive pickupGarc = this.readGARC(romEntry.getString("PickupData"), false);
             byte[] pickupData = pickupGarc.getFile(0);
-            int numberOfPickupItems = FileFunctions.readFullIntLittleEndian(pickupData, 0) - 1; // GameFreak why???
+            int numberOfPickupItems = FileFunctions.readFullInt(pickupData, 0) - 1; // GameFreak why???
             for (int i = 0; i < numberOfPickupItems; i++) {
                 int offset = 4 + (i * 0xC);
                 int item = FileFunctions.read2ByteInt(pickupData, offset);
@@ -3353,7 +3358,7 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
         public ZoneData(byte[] zoneDataBytes, int index) {
             data = new byte[size];
             System.arraycopy(zoneDataBytes, index * size, data, 0, size);
-            parentMap = FileFunctions.readFullIntLittleEndian(data, 0x1C);
+            parentMap = FileFunctions.readFullInt(data, 0x1C);
         }
     }
 
