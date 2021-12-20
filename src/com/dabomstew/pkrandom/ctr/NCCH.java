@@ -23,6 +23,7 @@ package com.dabomstew.pkrandom.ctr;
 
 import com.dabomstew.pkrandom.FileFunctions;
 import com.dabomstew.pkrandom.SysConstants;
+import com.dabomstew.pkrandom.cli.randomStringGenerator;
 import com.dabomstew.pkrandom.exceptions.EncryptedROMException;
 import com.dabomstew.pkrandom.exceptions.RandomizerIOException;
 import cuecompressors.BLZCoder;
@@ -81,7 +82,7 @@ public class NCCH {
 
         // TMP folder?
         String rawFilename = new File(filename).getName();
-        String dataFolder = "tmp_" + rawFilename.substring(0, rawFilename.lastIndexOf('.'));
+        String dataFolder = "tmp_" + randomStringGenerator.generateString() + rawFilename.substring(0, rawFilename.lastIndexOf('.'));
         // remove nonsensical chars
         dataFolder = dataFolder.replaceAll("[^A-Za-z0-9_]+", "");
         File tmpFolder = new File(SysConstants.ROOT_PATH + dataFolder);
@@ -332,6 +333,9 @@ public class NCCH {
         fNew.seek(0x0);
         fNew.write(zeroedSignature);
         fNew.close();
+        purgeDirectory(new File(tmpFolder));
+        File directory = new File(tmpFolder);
+        directory.delete();
     }
 
     private long rebuildExefs(RandomAccessFile fNew, long newExefsOffset) throws IOException, NoSuchAlgorithmException {
