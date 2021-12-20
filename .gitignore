@@ -42,3 +42,6 @@ util/log
 out/
 .idea/
 *.iml
+.env
+lib/
+lib/*
