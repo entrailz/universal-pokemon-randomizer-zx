@@ -36,6 +36,7 @@ import com.dabomstew.pkrandom.pokemon.ExpCurve;
 import com.dabomstew.pkrandom.pokemon.GenRestrictions;
 import com.dabomstew.pkrandom.pokemon.Pokemon;
 import com.dabomstew.pkrandom.romhandlers.*;
+import com.dabomstew.pkrandom.worker.WorkerStart;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -3755,6 +3756,9 @@ public class NewRandomizerGUI {
             String[] commandArgs = Arrays.copyOfRange(args, 1, args.length);
             int exitCode = CliRandomizer.invoke(commandArgs);
             //System.exit(exitCode);
+        } else if (firstCliArg.equals("worker")) {
+            String[] commandArgs = Arrays.copyOfRange(args, 1, args.length);
+            int exitCode = WorkerStart.invoke(commandArgs);
         } else {
             launcherInput = firstCliArg;
             if (launcherInput.equals("please-use-the-launcher")) usedLauncher = true;
