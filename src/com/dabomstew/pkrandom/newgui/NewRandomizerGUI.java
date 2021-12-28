@@ -587,7 +587,7 @@ public class NewRandomizerGUI {
     private void showInvalidRomPopup() {
         if (showInvalidRomPopup) {
             String message = String.format(bundle.getString("GUI.invalidRomMessage"));
-            JLabel label = new JLabel("<html><b>You will NOT receive official support for randomizing this ROM.</b>");
+            JLabel label = new JLabel("<html><b>Randomizing ROM hacks or bad ROM dumps is not supported and may cause issues.</b>");
             JCheckBox checkbox = new JCheckBox("Don't show this again");
             Object[] messages = {message, label, checkbox};
             Object[] options = {"OK"};
@@ -915,7 +915,7 @@ public class NewRandomizerGUI {
                 boolean succeededSave = false;
                 try {
                     romHandler.setLog(verboseLog);
-                    finishedCV.set(new Randomizer(settings, romHandler, saveAsDirectory).randomize(filename,
+                    finishedCV.set(new Randomizer(settings, romHandler, bundle, saveAsDirectory).randomize(filename,
                             verboseLog, seed));
                     succeededSave = true;
                 } catch (RandomizationException ex) {
@@ -1797,6 +1797,9 @@ public class NewRandomizerGUI {
             ex.printStackTrace();
             ps.println();
             ps.println("--ROM Diagnostics--");
+            if (!romHandler.isRomValid()) {
+                ps.println(bundle.getString("Log.InvalidRomLoaded"));
+            }
             romHandler.printRomDiagnostics(ps);
             System.setErr(e1);
             ps.close();

@@ -137,7 +137,7 @@ public class CliRandomizer {
 
                     String filename = fh.getAbsolutePath();
 
-                    Randomizer randomizer = new Randomizer(settings, romHandler, saveAsDirectory);
+                    Randomizer randomizer = new Randomizer(settings, romHandler, bundle, saveAsDirectory);
                     if (seed == 0)
                     {
                         seed = RandomSource.pickSeed();
@@ -147,7 +147,6 @@ public class CliRandomizer {
                     {
                         randomizer.randomize(filename, verboseLog, seed);
                     }
-
                     verboseLog.close();
                     byte[] out = baos.toByteArray();
                     if (saveLog) {
@@ -162,6 +161,7 @@ public class CliRandomizer {
                             printWarning("Could not write log.");
                         }
                     }
+                    printSuccess("Finished randomizing - update status via API");
                     String jsonString = new JSONObject()
                             .put("status", 200)
                             .put("data", new JSONObject().put("fileName", fh.getName())
