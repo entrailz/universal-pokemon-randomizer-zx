@@ -35,6 +35,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Base64;
+import java.util.List;
 import java.util.zip.CRC32;
 
 import com.dabomstew.pkrandom.exceptions.InvalidSupplementFilesException;
@@ -86,6 +87,19 @@ public class Utils {
                 throw new FileNotFoundException(filename);
             }
         }
+    }
+
+    public class FichierLink{
+        public String size;
+        public String remove;
+        public String download;
+        public String whirlpool;
+        public String filename;
+    }
+
+    public class FichierRoot{
+        public int incoming;
+        public List<FichierLink> links;
     }
 
     public static void validatePresetSupplementFiles(String config, CustomNamesSet customNames)
