@@ -631,7 +631,7 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
                     // Deerling/Sawsbuck: handled automatically in gen 5
                     pkmn.cosmeticForms = formeCount;
                 }
-                if (pkmn.number == 670) {
+                if (pkmn.number == Species.Gen5Formes.keldeoCosmetic1) {
                     pkmn.actuallyCosmetic = true;
                 }
             }
@@ -781,7 +781,7 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
 
     @Override
     public List<Pokemon> getIrregularFormes() {
-        return Gen5Constants.irregularFormes.stream().map(i -> pokes[i]).collect(Collectors.toList());
+        return Gen5Constants.getIrregularFormes(romEntry.romType).stream().map(i -> pokes[i]).collect(Collectors.toList());
     }
 
     @Override
