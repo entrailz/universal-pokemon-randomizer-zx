@@ -45,3 +45,4 @@ out/
 .env
 lib/
 lib/*
+WebConstants.java

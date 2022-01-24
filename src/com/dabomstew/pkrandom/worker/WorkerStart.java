@@ -86,10 +86,11 @@ public class WorkerStart implements Runnable {
             System.out.println(activeThreads);
             if (activeThreads < 5)
             {
-                String outFileName = randomStringGenerator.generateString();
+                /*String outFileName = randomStringGenerator.generateString();
                 Settings settings = getSettingsFromString("317AAUEAQEGABkATAAEAAEeRAAEFAAAFABABAIBAAAAAAAAAAAAMgQyAQAICTIGBAC8AAISTGVhZiBHcmVlbiAoVSkgMS4xjx1aI+PDOIo=");
                 Runnable worker = new RandomizationWorker(settings, 1010101, "green.gba", outFileName, false, null, false);
-                executor.execute(worker);
+                executor.execute(worker);*/
+
             }
         }
         catch (Exception ex)
