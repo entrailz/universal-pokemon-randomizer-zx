@@ -35,6 +35,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Base64;
+import java.util.Date;
 import java.util.List;
 import java.util.zip.CRC32;
 
@@ -100,6 +101,26 @@ public class Utils {
     public class FichierRoot{
         public int incoming;
         public List<FichierLink> links;
+    }
+
+    public static class ApiRandomizations {
+        public int id;
+        public String generated_id;
+        public String game;
+        public String settings;
+        public String seed;
+        public String user_id;
+        public int votes;
+        public Date created_at;
+        public Date updated_at;
+        public String status;
+        public String download_link;
+        public String file_name;
+        public String local_path;
+    }
+
+    public static class ApiRandomizationsRoot {
+        public List<ApiRandomizations> randomizations;
     }
 
     public static void validatePresetSupplementFiles(String config, CustomNamesSet customNames)
